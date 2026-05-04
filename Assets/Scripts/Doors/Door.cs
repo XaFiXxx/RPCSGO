@@ -18,6 +18,11 @@ public class Door : MonoBehaviour {
 
 	public bool canBeLockPicked = true;
 
+	[Header("Lockpick Settings")]
+	public float simpleLockpickDuration = 5f;
+	[Range(0f, 1f)]
+	public float simpleLockpickSuccessChance = 0.7f;
+
 	// Use this for initialization
 	void Start () {
 		asource = GetComponent<AudioSource> ();
@@ -62,27 +67,38 @@ public class Door : MonoBehaviour {
 		Debug.Log(locked ? "Porte verrouillée" : "Porte déverrouillée");
 	}
 
-	public void TrySimpleLockpick(PlayerInventory inventory)
+	public bool ResolveSimpleLockpick(PlayerInventory inventory)
 	{
 		if (!locked)
 		{
 			Debug.Log("La porte est déjà déverrouillée.");
-			return;
+			return false;
 		}
 
 		if (!canBeLockPicked)
 		{
 			Debug.Log("Cette porte ne peut pas être crochetée.");
-			return;
+			return false;
 		}
 
 		if (!inventory.UseSimpleLockpick())
 		{
-			return;
+			return false;
 		}
 
-		locked = false;
-		Debug.Log("Porte crochetée avec un kit simple.");
+		bool success = Random.value <= simpleLockpickSuccessChance;
+
+		if (success)
+		{
+			locked = false;
+			Debug.Log("Crochetage réussi. Porte déverrouillée.");
+		}
+		else
+		{
+			Debug.Log("Crochetage échoué. Lockpick perdu.");
+		}
+
+		return success;
 	}
 
 	public void TryExplosiveLockpick(PlayerInventory inventory)
