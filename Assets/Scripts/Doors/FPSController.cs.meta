@@ -14,5 +14,5 @@ AssetOrigin:
   productId: 280509
   packageName: Free Wood Door Pack
   packageVersion: 1.0
-  assetPath: Assets/Free Wood Door Pack/Script/FPSController.cs
+  assetPath: Assets/Scripts/Doors/FPSController.cs
   uploadId: 658197
