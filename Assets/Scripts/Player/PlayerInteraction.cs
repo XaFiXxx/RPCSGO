@@ -8,7 +8,7 @@ using TMPro;
 public class PlayerInteraction : MonoBehaviour
 {
     public float range = 3f;
-    public TMP_Text lockpickText;
+    public GameObject lockpickUI;
 
     private PlayerKeys playerKeys;
     private PlayerInventory inventory;
@@ -20,6 +20,9 @@ public class PlayerInteraction : MonoBehaviour
         controller = GetComponent<FirstPersonController>();
         playerKeys = GetComponent<PlayerKeys>();
         inventory = GetComponent<PlayerInventory>();
+
+        if (lockpickUI != null)
+            lockpickUI.gameObject.SetActive(false);
     }
 
     void Update()
@@ -31,29 +34,21 @@ public class PlayerInteraction : MonoBehaviour
 
         if (Physics.Raycast(Camera.main.transform.position, Camera.main.transform.forward, out hit, range))
         {
-            Door door = hit.collider.GetComponent<Door>();
+            Door door = hit.collider.GetComponentInParent<Door>();
 
             if (door != null)
             {
                 if (Keyboard.current.eKey.wasPressedThisFrame)
-                {
                     door.OpenDoor();
-                }
 
                 if (Keyboard.current.fKey.wasPressedThisFrame)
-                {
                     door.ToggleLock(playerKeys);
-                }
 
                 if (Keyboard.current.gKey.wasPressedThisFrame)
-                {
                     StartCoroutine(SimpleLockpickRoutine(door));
-                }
 
                 if (Keyboard.current.hKey.wasPressedThisFrame)
-                {
                     door.TryExplosiveLockpick(inventory);
-                }
 
                 return;
             }
@@ -63,9 +58,7 @@ public class PlayerInteraction : MonoBehaviour
             if (supply != null)
             {
                 if (Keyboard.current.eKey.wasPressedThisFrame)
-                {
                     supply.GiveItems(inventory);
-                }
 
                 return;
             }
@@ -77,19 +70,27 @@ public class PlayerInteraction : MonoBehaviour
         isLockpicking = true;
 
         if (controller != null)
-        controller.enabled = false;
+            controller.enabled = false;
 
-        Debug.Log("Crochetage en cours...");
-
+        if (lockpickUI != null)
+            lockpickUI.gameObject.SetActive(true);
 
         Debug.Log("Crochetage en cours...");
 
         yield return new WaitForSeconds(door.simpleLockpickDuration);
 
-        door.ResolveSimpleLockpick(inventory);
+        bool succes = door.ResolveSimpleLockpick(inventory);
+
+        if (succes)
+        {
+            door.OpenDoor();
+        }
+
+        if (lockpickUI != null)
+            lockpickUI.gameObject.SetActive(false);
 
         if (controller != null)
-        controller.enabled = true;
+            controller.enabled = true;
 
         isLockpicking = false;
     }
