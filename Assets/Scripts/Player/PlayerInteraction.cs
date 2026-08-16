@@ -133,8 +133,10 @@ public class PlayerInteraction : MonoBehaviour
         if (success)
         {
             if (lockpickText != null)
+            {
                 lockpickText.text =
                     "Crochetage réussi !";
+            }
 
             yield return new WaitForSeconds(0.5f);
 
@@ -143,8 +145,10 @@ public class PlayerInteraction : MonoBehaviour
         else
         {
             if (lockpickText != null)
+            {
                 lockpickText.text =
                     "Crochetage échoué.";
+            }
 
             yield return new WaitForSeconds(0.8f);
         }
@@ -183,12 +187,24 @@ public class PlayerInteraction : MonoBehaviour
         if (success)
         {
             if (lockpickText != null)
+            {
                 lockpickText.text =
                     "Serrure forcée !";
+            }
 
             yield return new WaitForSeconds(0.5f);
 
             door.OpenDoor();
+        }
+        else
+        {
+            if (lockpickText != null)
+            {
+                lockpickText.text =
+                    "Forçage échoué !";
+            }
+
+            yield return new WaitForSeconds(0.8f);
         }
 
         StopLockpickUI();

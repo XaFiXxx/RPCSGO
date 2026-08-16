@@ -30,6 +30,9 @@ namespace DoorScript
 
         public float explosiveLockpickDuration = 2f;
 
+        [Range(0f, 1f)]
+        public float explosiveLockpickSuccessChance = 0.9f;
+
         void Start()
         {
             asource = GetComponent<AudioSource>();
@@ -174,11 +177,21 @@ namespace DoorScript
             if (!inventory.UseExplosiveLockpick())
                 return false;
 
-            locked = false;
+            bool success =
+                Random.value <= explosiveLockpickSuccessChance;
 
-            Debug.Log("Porte forcée !");
+            if (success)
+            {
+                locked = false;
 
-            return true;
+                Debug.Log("Porte forcée !");
+            }
+            else
+            {
+                Debug.Log("Forçage explosif échoué.");
+            }
+
+            return success;
         }
     }
 }
