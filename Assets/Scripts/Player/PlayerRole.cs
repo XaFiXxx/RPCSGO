@@ -16,7 +16,7 @@ public class PlayerRole : MonoBehaviour
     void Awake()
     {
         playerKeys = GetComponent<PlayerKeys>();
-        SetRole(Role.Police);
+        GiveRoleKeys();
     }
 
     public void SetRole(Role newRole)

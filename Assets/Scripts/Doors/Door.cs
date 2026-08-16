@@ -1,125 +1,184 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 
 namespace DoorScript
 {
-	[RequireComponent(typeof(AudioSource))]
-	public class Door : MonoBehaviour
-	{
-		public bool open;
-		public float smooth = 1.0f;
+    [RequireComponent(typeof(AudioSource))]
+    public class Door : MonoBehaviour
+    {
+        [Header("Door")]
+        public bool open;
+        public float smooth = 1.0f;
 
-		float DoorOpenAngle = -90.0f;
-		float DoorCloseAngle = 0.0f;
+        private float DoorOpenAngle = -90.0f;
+        private float DoorCloseAngle = 0.0f;
 
-		public AudioSource asource;
-		public AudioClip openDoor, closeDoor;
+        [Header("Audio")]
+        public AudioSource asource;
+        public AudioClip openDoor;
+        public AudioClip closeDoor;
 
-		public bool locked = false;
-		public string requiredKey = "";
+        [Header("Lock")]
+        public bool locked = false;
+        public string requiredKey = "";
+        public bool canBeLockPicked = true;
 
-		public bool canBeLockPicked = true;
+        [Header("Lockpick Settings")]
+        public float simpleLockpickDuration = 5f;
 
-		[Header("Lockpick Settings")]
-		public float simpleLockpickDuration = 5f;
+        [Range(0f, 1f)]
+        public float simpleLockpickSuccessChance = 0.7f;
 
-		[Range(0f, 1f)]
-		public float simpleLockpickSuccessChance = 0.7f;
+        public float explosiveLockpickDuration = 2f;
 
-		void Start()
-		{
-			asource = GetComponent<AudioSource>();
-		}
+        void Start()
+        {
+            asource = GetComponent<AudioSource>();
+        }
 
-		void Update()
-		{
-			if (open)
-			{
-				var target = Quaternion.Euler(0, DoorOpenAngle, 0);
-				transform.localRotation = Quaternion.Slerp(transform.localRotation, target, Time.deltaTime * 5 * smooth);
-			}
-			else
-			{
-				var target1 = Quaternion.Euler(0, DoorCloseAngle, 0);
-				transform.localRotation = Quaternion.Slerp(transform.localRotation, target1, Time.deltaTime * 5 * smooth);
-			}
-		}
+        void Update()
+        {
+            if (open)
+            {
+                Quaternion target = Quaternion.Euler(0, DoorOpenAngle, 0);
 
-		public void OpenDoor()
-		{
-			if (locked)
-			{
-				Debug.Log("Porte verrouillée");
-				return;
-			}
+                transform.localRotation = Quaternion.Slerp(
+                    transform.localRotation,
+                    target,
+                    Time.deltaTime * 5 * smooth
+                );
+            }
+            else
+            {
+                Quaternion target = Quaternion.Euler(0, DoorCloseAngle, 0);
 
-			open = !open;
-			asource.clip = open ? openDoor : closeDoor;
-			asource.Play();
-		}
+                transform.localRotation = Quaternion.Slerp(
+                    transform.localRotation,
+                    target,
+                    Time.deltaTime * 5 * smooth
+                );
+            }
+        }
 
-		public void ToggleLock(PlayerKeys player)
-		{
-			if (!string.IsNullOrEmpty(requiredKey) && !player.HasKey(requiredKey))
-			{
-				Debug.Log("Tu n'as pas la clé");
-				return;
-			}
+        public void OpenDoor()
+        {
+            if (locked)
+            {
+                Debug.Log("Porte verrouillée.");
+                return;
+            }
 
-			locked = !locked;
-			Debug.Log(locked ? "Porte verrouillée" : "Porte déverrouillée");
-		}
+            open = !open;
 
-		public bool ResolveSimpleLockpick(PlayerInventory inventory)
-		{
-			if (!locked)
-			{
-				Debug.Log("La porte est déjà déverrouillée.");
-				return false;
-			}
+            if (asource != null)
+            {
+                asource.clip = open ? openDoor : closeDoor;
 
-			if (!canBeLockPicked)
-			{
-				Debug.Log("Cette porte ne peut pas être crochetée.");
-				return false;
-			}
+                if (asource.clip != null)
+                    asource.Play();
+            }
+        }
 
-			if (!inventory.UseSimpleLockpick())
-			{
-				return false;
-			}
+        public void ToggleLock(PlayerKeys player)
+        {
+            if (!string.IsNullOrEmpty(requiredKey) &&
+                !player.HasKey(requiredKey))
+            {
+                Debug.Log("Tu n'as pas la clé.");
+                return;
+            }
 
-			bool success = Random.value <= simpleLockpickSuccessChance;
+            locked = !locked;
 
-			if (success)
-			{
-				locked = false;
-				Debug.Log("Crochetage réussi.");
-			}
-			else
-			{
-				Debug.Log("Crochetage échoué.");
-			}
+            Debug.Log(
+                locked
+                    ? "Porte verrouillée."
+                    : "Porte déverrouillée."
+            );
+        }
 
-			return success;
-		}
+        public bool CanStartSimpleLockpick(PlayerInventory inventory)
+        {
+            if (!locked)
+            {
+                Debug.Log("La porte est déjà déverrouillée.");
+                return false;
+            }
 
-		public void TryExplosiveLockpick(PlayerInventory inventory)
-		{
-			if (!locked)
-			{
-				Debug.Log("Déjà ouverte.");
-				return;
-			}
+            if (!canBeLockPicked)
+            {
+                Debug.Log("Cette porte ne peut pas être crochetée.");
+                return false;
+            }
 
-			if (!inventory.UseExplosiveLockpick())
-			{
-				return;
-			}
+            if (inventory.simpleLockpicks <= 0)
+            {
+                Debug.Log("Pas de lockpick simple.");
+                return false;
+            }
 
-			locked = false;
-			Debug.Log("Porte forcée !");
-		}
-	}
+            return true;
+        }
+
+        public bool ResolveSimpleLockpick(PlayerInventory inventory)
+        {
+            if (!CanStartSimpleLockpick(inventory))
+                return false;
+
+            if (!inventory.UseSimpleLockpick())
+                return false;
+
+            bool success =
+                Random.value <= simpleLockpickSuccessChance;
+
+            if (success)
+            {
+                locked = false;
+                Debug.Log("Crochetage réussi.");
+            }
+            else
+            {
+                Debug.Log("Crochetage échoué.");
+            }
+
+            return success;
+        }
+
+        public bool CanStartExplosiveLockpick(PlayerInventory inventory)
+        {
+            if (!locked)
+            {
+                Debug.Log("La porte est déjà déverrouillée.");
+                return false;
+            }
+
+            if (!canBeLockPicked)
+            {
+                Debug.Log("Cette porte ne peut pas être forcée.");
+                return false;
+            }
+
+            if (inventory.explosiveLockpicks <= 0)
+            {
+                Debug.Log("Pas de lockpick explosif.");
+                return false;
+            }
+
+            return true;
+        }
+
+        public bool ResolveExplosiveLockpick(PlayerInventory inventory)
+        {
+            if (!CanStartExplosiveLockpick(inventory))
+                return false;
+
+            if (!inventory.UseExplosiveLockpick())
+                return false;
+
+            locked = false;
+
+            Debug.Log("Porte forcée !");
+
+            return true;
+        }
+    }
 }
