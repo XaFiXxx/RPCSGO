@@ -18,6 +18,7 @@ public class PlayerInteraction : MonoBehaviour
 
     private PlayerKeys playerKeys;
     private PlayerInventory inventory;
+    private PlayerWallet wallet;
     private FirstPersonController controller;
 
     private bool isLockpicking = false;
@@ -29,6 +30,7 @@ public class PlayerInteraction : MonoBehaviour
         controller = GetComponent<FirstPersonController>();
         playerKeys = GetComponent<PlayerKeys>();
         inventory = GetComponent<PlayerInventory>();
+        wallet = GetComponent<PlayerWallet>();
 
         if (lockpickUI != null)
             lockpickUI.SetActive(false);
@@ -47,15 +49,15 @@ public class PlayerInteraction : MonoBehaviour
 
         RaycastHit hit;
 
-        // =========================
-        // PORTES
-        // =========================
         if (Physics.Raycast(
             Camera.main.transform.position,
             Camera.main.transform.forward,
             out hit,
             range))
         {
+            // =========================
+            // PORTES
+            // =========================
             Door door =
                 hit.collider.GetComponentInParent<Door>();
 
@@ -68,14 +70,34 @@ public class PlayerInteraction : MonoBehaviour
                     door.ToggleLock(playerKeys);
 
                 if (Keyboard.current.gKey.wasPressedThisFrame)
+                {
                     StartCoroutine(
                         SimpleLockpickRoutine(door)
                     );
+                }
 
                 if (Keyboard.current.hKey.wasPressedThisFrame)
+                {
                     StartCoroutine(
                         ExplosiveLockpickRoutine(door)
                     );
+                }
+
+                return;
+            }
+
+            // =========================
+            // ATM
+            // =========================
+            ATM atm =
+                hit.collider.GetComponentInParent<ATM>();
+
+            if (atm != null)
+            {
+                if (Keyboard.current.eKey.wasPressedThisFrame)
+                {
+                    atm.Interact(wallet);
+                }
 
                 return;
             }
